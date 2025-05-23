@@ -1,198 +1,203 @@
-﻿using System; // Directiva using pentru spațiul de nume System, care conține clasele de bază din .NET Framework.
-using Microsoft.EntityFrameworkCore; // Directiva using pentru spațiul de nume Microsoft.EntityFrameworkCore, care conține clasele necesare pentru lucru cu Entity Framework Core.
-using System.Linq; // Directiva using pentru spațiul de nume System.Linq, care permite utilizarea funcționalităților LINQ.
-using Microsoft.EntityFrameworkCore.SqlServer; // Directiva using pentru spațiul de nume Microsoft.EntityFrameworkCore.SqlServer, care conține extensiile pentru lucrul cu SQL Server în Entity Framework Core.
-using System.Collections.Generic; // Directiva using pentru spațiul de nume System.Collections.Generic, care conține clasele pentru lucrul cu colecții generice.
+using System;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
-namespace ContBancarApp
+namespace AplicatieBancara
 {
     class Program
     {
         static void Main(string[] args)
         {
-            using (var dbContext = new UserDbContext()) // Crearea și utilizarea unei instanțe a clasei UserDbContext într-un bloc using pentru a asigura eliberarea resurselor conexiunii la bază de date.
+            using (var contextUtilizatori = new ContextUtilizatori())
             {
-                dbContext.Database.EnsureCreated(); // Asigurarea că baza de date și tabelele sunt create (dacă nu există deja).
+                contextUtilizatori.Database.EnsureCreated();
 
-                BankSystem bankSystem = new BankSystem(dbContext); // Inițializarea și crearea unui obiect de tip BankSystem cu contextul bazei de date.
-                bankSystem.Start(); // Apelarea metodei Start() pentru a începe execuția sistemului bancar.
+                SistemBancar sistemBancar = new SistemBancar(contextUtilizatori);
+                sistemBancar.Porneste();
             }
         }
     }
 
-    public class BankSystem
+    public class SistemBancar
     {
-        private UserDbContext _dbContext; // Declarația unei variabile private _dbContext de tipul UserDbContext.
+        private ContextUtilizatori _context;
 
-        public BankSystem(UserDbContext dbContext) // Constructorul clasei BankSystem care primește un obiect de tipul UserDbContext.
+        public SistemBancar(ContextUtilizatori context)
         {
-            _dbContext = dbContext; // Inițializarea variabilei _dbContext cu obiectul primit ca parametru.
+            _context = context;
         }
 
-        public void Start() // Metoda Start() care inițializează și conține bucla principală a sistemului bancar.
+        public void Porneste()
         {
-            while (true) // Bucla infinită care menține sistemul bancar în execuție până când utilizatorul decide să iasă.
+            while (true)
             {
-                Console.WriteLine("1. Creare cont"); // Afisarea opțiunii pentru crearea unui cont.
-                Console.WriteLine("2. Logare"); // Afisarea opțiunii pentru logare.
-                Console.WriteLine("3. Iesire"); // Afisarea opțiunii pentru a ieși din program.
+                Console.WriteLine("1. Creeaza cont");
+                Console.WriteLine("2. Autentificare");
+                Console.WriteLine("3. Iesire");
+                Console.Write("Alege optiunea: ");
+                string optiune = Console.ReadLine();
 
-                Console.Write("Alegeti optiunea: "); // Solicitarea utilizatorului să aleagă o opțiune.
-                string choice = Console.ReadLine(); // Citirea opțiunii alese de utilizator.
-
-                switch (choice) // Instrucțiunea switch care dirijează programul în funcție de opțiunea aleasă de utilizator.
+                switch (optiune)
                 {
-                    case "1": // Cazul în care utilizatorul alege să creeze un cont.
-                        CreateAccount(); // Apelarea metodei pentru crearea unui cont.
+                    case "1":
+                        CreeazaCont();
                         break;
-                    case "2": // Cazul în care utilizatorul alege să se autentifice.
-                        Login(); // Apelarea metodei pentru autentificare.
+                    case "2":
+                        Autentificare();
                         break;
-                    case "3": // Cazul în care utilizatorul alege să iasă din program.
-                        Environment.Exit(0); // Ieșirea din program cu codul 0 (fără erori).
+                    case "3":
+                        Environment.Exit(0);
                         break;
-                    default: // Cazul în care utilizatorul introduce o opțiune invalidă.
-                        Console.WriteLine("Opțiune invalidă! Încercați din nou."); // Afisarea unui mesaj de eroare.
+                    default:
+                        Console.WriteLine("Optiune invalida! Incearca din nou.");
                         break;
                 }
             }
         }
 
-        private void CreateAccount() // Metoda pentru crearea unui cont nou.
+        private void CreeazaCont()
         {
-            Console.Write("Introduceti numele de utilizator: "); // Solicitarea introducerii numelui de utilizator.
-            string username = Console.ReadLine(); // Citirea numelui de utilizator introdus.
+            Console.Write("Introdu numele de utilizator: ");
+            string numeUtilizator = Console.ReadLine();
 
-            Console.Write("Introduceti parola: "); // Solicitarea introducerii parolei.
-            string password = Console.ReadLine(); // Citirea parolei introduse.
+            Console.Write("Introdu parola: ");
+            string parola = Console.ReadLine();
 
-            if (_dbContext.Users.Any(u => u.Username == username)) // Verificarea dacă numele de utilizator există deja în baza de date.
+            if (_context.Utilizatori.Any(u => u.NumeUtilizator == numeUtilizator))
             {
-                Console.WriteLine("Numele de utilizator există deja!"); // Afisarea unui mesaj de eroare.
-                return; // Ieșirea prematură din metoda deoarece numele de utilizator există deja.
+                Console.WriteLine("Numele de utilizator exista deja!");
+                return;
             }
 
-            var newUser = new User { Username = username, Password = password, Balance = 0 }; // Inițializarea unui obiect de tip User cu datele introduse.
-            _dbContext.Users.Add(newUser); // Adăugarea noului utilizator în baza de date.
-            _dbContext.SaveChanges(); // Salvarea modificărilor în baza de date.
-            Console.WriteLine("Cont creat cu succes!"); // Afisarea unui mesaj de confirmare.
+            var utilizatorNou = new Utilizator { NumeUtilizator = numeUtilizator, Parola = parola, Sold = 0 };
+            _context.Utilizatori.Add(utilizatorNou);
+            _context.SaveChanges();
+            Console.WriteLine("Cont creat cu succes!");
         }
 
-        private void Login() // Metoda pentru autentificarea utilizatorului.
+        private void Autentificare()
         {
-            Console.Write("Introduceti numele de utilizator: "); // Solicitarea introducerii numelui de utilizator.
-            string username = Console.ReadLine(); // Citirea numelui de utilizator introdus.
+            Console.Write("Introdu numele de utilizator: ");
+            string numeUtilizator = Console.ReadLine();
 
-            Console.Write("Introduceti parola: "); // Solicitarea introducerii parolei.
-            string password = Console.ReadLine(); // Citirea parolei introduse.
+            Console.Write("Introdu parola: ");
+            string parola = Console.ReadLine();
 
-            var user = _dbContext.Users.FirstOrDefault(u => u.Username == username && u.Password == password); // Căutarea utilizatorului în baza de date.
+            var utilizator = _context.Utilizatori.FirstOrDefault(u => u.NumeUtilizator == numeUtilizator && u.Parola == parola);
 
-            if (user != null) // Verificarea dacă utilizatorul a fost găsit în baza de date.
+            if (utilizator != null)
             {
-                UserSession session = new UserSession(_dbContext, user); // Inițializarea unei sesiuni de utilizator cu datele găsite.
-                session.Start(); // Pornirea sesiunii de utilizator.
+                SesiuneUtilizator sesiune = new SesiuneUtilizator(_context, utilizator);
+                sesiune.Porneste();
             }
             else
             {
-                Console.WriteLine("Nume de utilizator sau parola incorecta!"); // Afisarea unui mesaj de eroare în cazul în care autentificarea a eșuat.
+                Console.WriteLine("Nume de utilizator sau parola incorecta!");
             }
         }
     }
 
-    public class UserSession
+    public class SesiuneUtilizator
     {
-        private UserDbContext _dbContext; // Declarația unei variabile private _dbContext de tipul UserDbContext.
-        private User _user; // Declarația unei variabile private _user de tipul User.
+        private ContextUtilizatori _context;
+        private Utilizator _utilizator;
 
-        public UserSession(UserDbContext dbContext, User user) // Constructorul clasei UserSession care primește un obiect de tipul UserDbContext și un obiect de tipul User.
+        public SesiuneUtilizator(ContextUtilizatori context, Utilizator utilizator)
         {
-            _dbContext = dbContext; // Inițializarea variabilei _dbContext cu obiectul primit ca prim parametru.
-            _user = user; // Inițializarea variabilei _user cu obiectul primit ca al doilea parametru.
+            _context = context;
+            _utilizator = utilizator;
         }
 
-        public void Start() // Metoda Start() care inițializează și conține bucla principală a sesiunii de utilizator.
+        public void Porneste()
         {
-            while (true) // Bucla infinită care menține sesiunea de utilizator în execuție până când utilizatorul decide să se delogheze.
+            while (true)
             {
-                Console.WriteLine("1. Alimentare cont"); // Afisarea opțiunii pentru alimentarea contului.
-                Console.WriteLine("2. Interogare sold"); // Afisarea opțiunii pentru interogarea soldului.
-                Console.WriteLine("3. Retragere numerar"); // Afisarea opțiunii pentru retragerea numerarului.
-                Console.WriteLine("4. Delogare"); // Afisarea opțiunii pentru delogare.
+                Console.WriteLine("1. Depune bani");
+                Console.WriteLine("2. Afiseaza soldul");
+                Console.WriteLine("3. Retrage bani");
+                Console.WriteLine("4. Delogare");
 
-                Console.Write("Alegeti optiunea: "); // Solicitarea utilizatorului să aleagă o opțiune.
-                string choice = Console.ReadLine(); // Citirea opțiunii alese de utilizator.
+                Console.Write("Alege optiunea: ");
+                string optiune = Console.ReadLine();
 
-                switch (choice) // Instrucțiunea switch care dirijează programul în funcție de opțiunea aleasă de utilizator.
+                switch (optiune)
                 {
-                    case "1": // Cazul în care utilizatorul alege să alimenteze contul.
-                        Deposit(); // Apelarea metodei pentru alimentarea contului.
+                    case "1":
+                        DepuneBani();
                         break;
-                    case "2": // Cazul în care utilizatorul alege să interogheze soldul.
-                        CheckBalance(); // Apelarea metodei pentru interogarea soldului.
+                    case "2":
+                        AfiseazaSold();
                         break;
-                    case "3": // Cazul în care utilizatorul alege să retragă numerar.
-                        Withdraw(); // Apelarea metodei pentru retragerea numerarului.
+                    case "3":
+                        RetrageBani();
                         break;
-                    case "4": // Cazul în care utilizatorul alege să se delogheze.
-                        return; // Ieșirea din metoda deoarece utilizatorul s-a delogat.
-                    default: // Cazul în care utilizatorul introduce o opțiune invalidă.
-                        Console.WriteLine("Opțiune invalida! Încercați din nou."); // Afisarea unui mesaj de eroare.
+                    case "4":
+                        return;
+                    default:
+                        Console.WriteLine("Optiune invalida! Incearca din nou.");
                         break;
                 }
             }
         }
 
-        private void Deposit() // Metoda pentru alimentarea contului.
+        private void DepuneBani()
         {
-            Console.Write("Introduceti suma de bani de depus: "); // Solicitarea introducerii sumei de bani.
-            double amount = Convert.ToDouble(Console.ReadLine()); // Citirea sumei de bani introduse și conversia acesteia la tipul double.
-
-            _user.Balance += amount; // Adăugarea sumei de bani introduse la soldul utilizatorului.
-            _dbContext.SaveChanges(); // Salvarea modificărilor în baza de date.
-            Console.WriteLine("Suma de bani a fost depusa cu succes!"); // Afisarea unui mesaj de confirmare.
-        }
-
-        private void CheckBalance() // Metoda pentru interogarea soldului contului.
-        {
-            Console.WriteLine($"Soldul contului este: {_user.Balance} RON"); // Afisarea soldului contului.
-        }
-
-        private void Withdraw() // Metoda pentru retragerea numerarului din cont.
-        {
-            Console.Write("Introduceti suma de bani de retras: "); // Solicitarea introducerii sumei de bani pentru retragere.
-            double amount = Convert.ToDouble(Console.ReadLine()); // Citirea sumei de bani introduse și conversia acesteia la tipul double.
-
-            if (_user.Balance >= amount) // Verificarea dacă utilizatorul are suficienți bani în cont pentru retragerea sumei dorite.
+            Console.Write("Introdu suma de depus: ");
+            if (double.TryParse(Console.ReadLine(), out double suma) && suma > 0)
             {
-                _user.Balance -= amount; // Deducerea sumei de bani retrase din soldul utilizatorului.
-                _dbContext.SaveChanges(); // Salvarea modificărilor în baza de date.
-                Console.WriteLine("Suma de bani a fost retrasa cu succes!"); // Afisarea unui mesaj de confirmare.
+                _utilizator.Sold += suma;
+                _context.SaveChanges();
+                Console.WriteLine("Suma depusa cu succes!");
             }
             else
             {
-                Console.WriteLine("Fonduri insuficiente pentru retragere!"); // Afisarea unui mesaj de eroare în cazul în care fondurile sunt insuficiente.
+                Console.WriteLine("Suma introdusa nu este valida!");
+            }
+        }
+
+        private void AfiseazaSold()
+        {
+            Console.WriteLine($"Soldul tau este: {_utilizator.Sold} RON");
+        }
+
+        private void RetrageBani()
+        {
+            Console.Write("Introdu suma de retras: ");
+            if (double.TryParse(Console.ReadLine(), out double suma) && suma > 0)
+            {
+                if (_utilizator.Sold >= suma)
+                {
+                    _utilizator.Sold -= suma;
+                    _context.SaveChanges();
+                    Console.WriteLine("Suma retrasa cu succes!");
+                }
+                else
+                {
+                    Console.WriteLine("Fonduri insuficiente!");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Suma introdusa nu este valida!");
             }
         }
     }
 
-    public class User // Definirea clasei User care reprezintă un utilizator în sistemul bancar.
+    public class Utilizator
     {
-        public int UserId { get; set; } // Proprietatea UserId care reprezintă ID-ul utilizatorului.
-        public string Username { get; set; } // Proprietatea Username care reprezintă numele de utilizator.
-        public string Password { get; set; } // Proprietatea Password care reprezintă parola utilizatorului.
-        public double Balance { get; set; } // Proprietatea Balance care reprezintă soldul utilizatorului.
+        public int UtilizatorId { get; set; }
+        public string NumeUtilizator { get; set; }
+        public string Parola { get; set; }
+        public double Sold { get; set; }
     }
 
-    public class UserDbContext : DbContext // Definirea clasei UserDbContext care reprezintă contextul bazei de date.
+    public class ContextUtilizatori : DbContext
     {
-        public DbSet<User> Users { get; set; } // Proprietatea Users care reprezintă tabela utilizatorilor din baza de date.
+        public DbSet<Utilizator> Utilizatori { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) // Suprascrierea metodei OnConfiguring pentru configurarea opțiunilor contextului bazei de date.
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-             optionsBuilder.UseSqlServer("Server=;Database=;Trusted_Connection=True;"); // Configurarea conexiunii la baza de date SQL Server.
-           
+            optionsBuilder.UseSqlServer("Server=;Database=;Trusted_Connection=True;");
         }
     }
-       
 }
